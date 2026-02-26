@@ -1,65 +1,39 @@
-const form = document.getElementById('travelForm');
-const planContainer = document.getElementById('planContainer');
+// Sample code for enhanced API integration
+async function fetchGooglePlaces(location) {
+    const apiKey = 'YOUR_GOOGLE_PLACES_API_KEY';
+    const response = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&key=${apiKey}`);
+    if (!response.ok) throw new Error('Failed to fetch Google Places');
+    return await response.json();
+}
 
-form.addEventListener('submit', function(e) {
-    e.preventDefault();
+async function fetchOpenCage(location) {
+    const apiKey = 'YOUR_OPENCAGE_API_KEY';
+    const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${location}&key=${apiKey}`);
+    if (!response.ok) throw new Error('Failed to fetch OpenCage data');
+    return await response.json();
+}
 
-    // Get user inputs
-    const destination = document.getElementById('destination').value.trim();
-    const days = parseInt(document.getElementById('days').value);
-    const budget = parseInt(document.getElementById('budget').value);
-    const travelers = parseInt(document.getElementById('travelers').value);
-    const needHotel = document.getElementById('needHotel').checked;
+async function fetchOpenWeather(location) {
+    const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
+    const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}`);
+    if (!response.ok) throw new Error('Failed to fetch OpenWeatherMap data');
+    return await response.json();
+}
 
-    if (!destination || days <= 0 || budget <= 0 || travelers <= 0) {
-        alert("Please fill all fields correctly!");
-        return;
+// Combine API calls and handle errors
+async function getEnhancedData(location) {
+    try {
+        const [placesData, openCageData, weatherData] = await Promise.all([
+            fetchGooglePlaces(location),
+            fetchOpenCage(location),
+            fetchOpenWeather(location)
+        ]);
+        return {
+            places: placesData,
+            openCage: openCageData,
+            weather: weatherData
+        };
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
-
-    // Clear previous plan
-    planContainer.innerHTML = '';
-
-    for (let i = 1; i <= days; i++) {
-        const activity = getActivity(destination);
-        const transportCost = calculateTransport(budget, travelers);
-        const hotelCost = needHotel ? calculateHotel(budget, travelers) : 0;
-        const foodCost = calculateFood(budget, travelers);
-        const totalCost = transportCost + hotelCost + foodCost;
-
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <h3>Day ${i}</h3>
-            <p><strong>Destination:</strong> ${destination}</p>
-            <p><strong>Activity:</strong> ${activity}</p>
-            ${needHotel ? `<p><strong>Hotel:</strong> ₹${hotelCost}</p>` : ''}
-            <p><strong>Transport:</strong> ₹${transportCost}</p>
-            <p><strong>Food:</strong> ₹${foodCost}</p>
-            <p><strong>Total Estimated Cost:</strong> ₹${totalCost}</p>
-        `;
-        planContainer.appendChild(card);
-    }
-});
-
-function getActivity(destination) {
-    const activities = [
-        `Sightseeing in ${destination}`,
-        `Local market visit in ${destination}`,
-        `Outdoor adventure in ${destination}`,
-        `Relaxing day in ${destination} park`,
-        `Cultural experience in ${destination}`
-    ];
-    return activities[Math.floor(Math.random() * activities.length)];
-}
-
-function calculateTransport(budget, travelers) {
-    return Math.floor(Math.random() * (budget * 0.1)) + 100 * travelers;
-}
-
-function calculateHotel(budget, travelers) {
-    return Math.floor(Math.random() * (budget * 0.15)) + 500 * travelers;
-}
-
-function calculateFood(budget, travelers) {
-    return Math.floor(Math.random() * (budget * 0.05)) + 200 * travelers;
 }
